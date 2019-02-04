@@ -3,6 +3,8 @@ package com.example.dustapplication;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -37,6 +39,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -57,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
     ToggleButton gps;
     private final String BASE_URL = "http://openapi.airkorea.or.kr/";
     private final String Key = "8DIGt1JffYRo9AxFNnQBjfud5kuDiROVhl0CBRCaWS8OJSZqwqH0A4dl2j3lWC+hMLJhn2maHKpIIoivntVtow==";
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,6 +145,8 @@ public class MainActivity extends AppCompatActivity {
     private final LocationListener mLocationListener = new LocationListener() {
         public void onLocationChanged (Location location) {
             // 위치값 갱신 -> 이벤트 발생
+
+
             Log.d("test", "onLocationChanged, location:" + location);
 
             double longitude = location.getLongitude(); //경도
@@ -152,6 +156,7 @@ public class MainActivity extends AppCompatActivity {
             String provider = location.getProvider(); //위치제공자
             gpsData.setText("위치정보 : " + provider + "\n위도 : " + longitude + "\n경도 : " + latitude
                     + "\n고도 : " + altitude + "\n정확도 : "  + accuracy);
+            findAddress(longitude,latitude);
 
         }
         @Override
@@ -178,15 +183,14 @@ public class MainActivity extends AppCompatActivity {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(this,"승인이 허가되어 있습니다.",Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "승인이 허가되어 있습니다.", Toast.LENGTH_LONG).show();
                 } else {
-                    Toast.makeText(this,"아직 승인받지 않았습니다.",Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "아직 승인받지 않았습니다.", Toast.LENGTH_LONG).show();
                 }
                 return;
             }
         }
     }
-
     public void init() {
         textView = (TextView)findViewById(R.id.dustData);
 
@@ -199,5 +203,15 @@ public class MainActivity extends AppCompatActivity {
                 .baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .build();
+    }
+    public void findAddress(double lat, double lng) {
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault()); // 위도 및 경도 -> 주소 변환 geocoder 사용
+        try {
+            List<Address> address = geocoder.getFromLocation(lng, lat, 1); // 주소로 변환
+            gpsData.setText(address.get(0).toString());
+            Log.d("Data : ", address.get(0).toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

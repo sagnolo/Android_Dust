@@ -41,7 +41,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textOn="위치정보 가져오기"
-            android:textOff="위치정보 사용해제"/>
+            android:textOff="위치정보 사용해제"
+            android:checked="true"/>
 
     </LinearLayout>
 
