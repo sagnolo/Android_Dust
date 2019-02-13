@@ -34,15 +34,14 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"/>
 
         <ToggleButton
             android:id="@+id/gps"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textOn="위치정보 가져오기"
-            android:textOff="위치정보 사용해제"
-            android:checked="true"/>
+            android:textOff="위치정보 사용해제"/>
 
     </LinearLayout>
 
