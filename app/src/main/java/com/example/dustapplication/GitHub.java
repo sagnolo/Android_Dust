@@ -15,7 +15,8 @@ import retrofit2.http.QueryMap;
 
 public interface GitHub {
     //@Headers({"Accept: application/json"})
-    @GET("openapi/services/rest/ArpltnInforInqireSvc/getCtprvnMesureSidoLIst")
+    //@GET("openapi/services/rest/ArpltnInforInqireSvc/getCtprvnMesureSidoLIst")
+    @GET("openapi/services/rest/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty")
     Call<List_Data> contributors(
             //@Header("ServiceKey") String ServiceKey,
             // param 값

@@ -13,6 +13,8 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -22,10 +24,12 @@ import android.widget.ToggleButton;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -35,9 +39,12 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class MainActivity extends AppCompatActivity {
     private Retrofit retrofit;
     private TextView textView, gpsData;
+    LocationManager lm;
+    RecyclerView mRecyclerView;
+    RecyclerView.LayoutManager mLayoutManager;
+
     //int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
-    private final int MY_PERMISSIONS_REQUEST_LOCATION=1001;
-    ToggleButton gps;
+    private final int MY_PERMISSIONS_REQUEST_LOCATION = 1001;
     private final String BASE_URL = "http://openapi.airkorea.or.kr/";
     private final String Key = "8DIGt1JffYRo9AxFNnQBjfud5kuDiROVhl0CBRCaWS8OJSZqwqH0A4dl2j3lWC+hMLJhn2maHKpIIoivntVtow==";
 
@@ -45,54 +52,49 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        gps = (ToggleButton) findViewById(R.id.gps);
-        gpsData = (TextView)findViewById(R.id.gpsData);
-
+        gpsData = (TextView) findViewById(R.id.gpsData);
         // LocationManager 객체 얻어오기
-        final LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        mRecyclerView = findViewById(R.id.recycler_view);
+        mRecyclerView.setHasFixedSize(true);
+        mLayoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(mLayoutManager);
 
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.ACCESS_FINE_LOCATION)){
-                Toast.makeText(this,"위치 권한이 필요합니다.",Toast.LENGTH_LONG).show();
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+                Toast.makeText(this, "위치 권한이 필요합니다.", Toast.LENGTH_LONG).show();
             } else {
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                         MY_PERMISSIONS_REQUEST_LOCATION);
-                Toast.makeText(this,"위치 권한이 필요합니다.",Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "위치 권한이 필요합니다.", Toast.LENGTH_LONG).show();
             }
         }
 
         init();
 
-        gps.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try{
-                    if(gps.isChecked()){
-                        lm.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-                                100, // 최소 시간간격 (miliSecond)
-                                1, // 최소 변경거리 (m)
-                                mLocationListener);
-                        lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
-                                100,
-                                1,
-                                mLocationListener);
-                    } else {
-                        lm.removeUpdates(mLocationListener); // 자원 해제
-                    }
-                } catch (SecurityException ex){
-                    ex.printStackTrace();
-                }
-            }
-        });
-        gps.performClick();
+        try {
+            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+                    100, // 최소 시간간격 (miliSecond)
+                    1, // 최소 변경거리 (m)
+                    mLocationListener);
+            lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+                    100,
+                    1,
+                    mLocationListener);
+            //lm.removeUpdates(mLocationListener); // 자원 해제
+
+        } catch (SecurityException ex) {
+            ex.printStackTrace();
+        }
     }
 
     private final LocationListener mLocationListener = new LocationListener() {
-        public void onLocationChanged (Location location) {
+        public void onLocationChanged(Location location) {
             // 위치값 갱신 -> 이벤트 발생
             Log.d("test", "onLocationChanged, location:" + location);
 
@@ -102,10 +104,11 @@ public class MainActivity extends AppCompatActivity {
             float accuracy = location.getAccuracy(); //정확도
             String provider = location.getProvider(); //위치제공자
             gpsData.setText("위치정보 : " + provider + "\n위도 : " + longitude + "\n경도 : " + latitude
-                    + "\n고도 : " + altitude + "\n정확도 : "  + accuracy);
-            findAddress(longitude,latitude);
-
+                    + "\n고도 : " + altitude + "\n정확도 : " + accuracy);
+            findAddress(longitude, latitude);
+            lm.removeUpdates(mLocationListener);
         }
+
         @Override
         public void onStatusChanged(String provider, int status, Bundle extras) {
             Log.d("test", "onStatusChanged, provider:" + provider + ", status:" + status + " ,Bundle:" + extras);
@@ -121,25 +124,11 @@ public class MainActivity extends AppCompatActivity {
         public void onProviderDisabled(String provider) {
             Log.d("test", "onProviderDisabled, provider:" + provider);
         }
+
     };
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case MY_PERMISSIONS_REQUEST_LOCATION: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(this, "승인이 허가되어 있습니다.", Toast.LENGTH_LONG).show();
-                } else {
-                    Toast.makeText(this, "아직 승인받지 않았습니다.", Toast.LENGTH_LONG).show();
-                }
-                return;
-            }
-        }
-    }
     public void init() {
-        textView = (TextView)findViewById(R.id.dustData);
+        textView = (TextView) findViewById(R.id.dustData);
 
         Gson gson = new GsonBuilder()
                 .setLenient()
@@ -157,40 +146,50 @@ public class MainActivity extends AppCompatActivity {
         try {
             List<Address> address = geocoder.getFromLocation(lng, lat, 1); // 주소로 변환
             gpsData.setText(address.get(0).getSubLocality().toString()); // 구에 대한 정보 가져오기
-            asd();
+            find_dust();
             Log.d("Data : ", address.get(0).getSubLocality().toString());
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    public void asd(){
+    public void find_dust() {
         GitHub gitHub = retrofit.create(GitHub.class);
         Map<String, String> params = new HashMap<>();
 
-        params.put("sidoName","서울");
-        params.put("searchCondition","DAILY");
-        params.put("pageNo","1");
-        params.put("numOfRows","25");
-        params.put("ServiceKey",Key);
-        params.put("_returnType","json");
+        params.put("stationName", gpsData.getText().toString());
+        params.put("dataTerm", "DAILY");
+        params.put("pageNo", "1");
+        params.put("numOfRows", "25");
+        params.put("ServiceKey", Key);
+        params.put("_returnType", "json");
+        params.put("ver","1.3");
 
         //Call<List_Data> call = gitHub.contributors("서울", "DAILY", "1","25", "json", Key); // 쿼리 하나하나 보낼 때
         Call<List_Data> call = gitHub.contributors(params);
 
-        call.enqueue(new Callback<List_Data>(){
+        call.enqueue(new Callback<List_Data>() {
             @Override
             public void onResponse(Call<List_Data> call, Response<List_Data> response) {
                 List_Data list_data = response.body();
-                String data= "";
+                String data = "";
 
-                for(int i = 0; i < list_data.getList_detail().size();i++){ //값 넣어주기
-                    if(list_data.getList_detail().get(i).getCityName().equals(gpsData.getText().toString())) {
-                        data += "위치 : " + list_data.getList_detail().get(i).getCityName(); // 구
-                        data += " 미세먼지 농도 : " + list_data.getList_detail().get(i).getPm10Value() + "\n"; // 미세먼지 농도
-                    }
-                }
+//                for (int i = 0; i < list_data.getList_detail().size(); i++) { //값 넣어주기
+//                    if (list_data.getList_detail().get(i).getCityName().equals(gpsData.getText().toString())) {
+//                        data += "위치 : " + list_data.getList_detail().get(i).getCityName(); // 구
+//                        data += " 미세먼지 농도 : " + list_data.getList_detail().get(i).getPm10Value() + "\n"; // 미세먼지 농도
+//                    }
+//                }
+                data = " 미세먼지 농도 : " + list_data.getList_detail().get(0).getPm10Value() + "\n"; // 미세먼지 농도
                 textView.setText(data);
+                ArrayList<ListInfo> list_dataArrayList = new ArrayList<>();
+                list_dataArrayList.add(new ListInfo(R.drawable.ic_launcher_background,list_data.getList_detail().get(0).getPm25Value()));
+                list_dataArrayList.add(new ListInfo(R.drawable.ic_launcher_background,list_data.getList_detail().get(0).getCoValue()));
+                list_dataArrayList.add(new ListInfo(R.drawable.ic_launcher_background,list_data.getList_detail().get(0).getNo2Value()));
+                list_dataArrayList.add(new ListInfo(R.drawable.ic_launcher_background,list_data.getList_detail().get(0).getO3Value()));
+
+                MyAdapter myAdapter = new MyAdapter(list_dataArrayList);
+                mRecyclerView.setAdapter(myAdapter);
             }
 
             @Override
@@ -199,5 +198,21 @@ public class MainActivity extends AppCompatActivity {
                 t.printStackTrace();
             }
         });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(this, "승인이 허가되어 있습니다.", Toast.LENGTH_LONG).show();
+                } else {
+                    Toast.makeText(this, "아직 승인받지 않았습니다.", Toast.LENGTH_LONG).show();
+                }
+                return;
+            }
+        }
     }
 }
