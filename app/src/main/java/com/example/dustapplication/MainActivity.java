@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
     //int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
     private final int MY_PERMISSIONS_REQUEST_LOCATION = 1001;
     private final String BASE_URL = "http://openapi.airkorea.or.kr/";
-    private final String Key = "8DIGt1JffYRo9AxFNnQBjfud5kuDiROVhl0CBRCaWS8OJSZqwqH0A4dl2j3lWC+hMLJhn2maHKpIIoivntVtow==";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -183,6 +183,7 @@ public class MainActivity extends AppCompatActivity {
                 data = " 미세먼지 농도 : " + list_data.getList_detail().get(0).getPm10Value() + "\n"; // 미세먼지 농도
                 textView.setText(data);
                 ArrayList<ListInfo> list_dataArrayList = new ArrayList<>();
+                list_dataArrayList.add(new ListInfo(R.drawable.ic_launcher_background,list_data.getList_detail().get(0).getPm10Value()));
                 list_dataArrayList.add(new ListInfo(R.drawable.ic_launcher_background,list_data.getList_detail().get(0).getPm25Value()));
                 list_dataArrayList.add(new ListInfo(R.drawable.ic_launcher_background,list_data.getList_detail().get(0).getCoValue()));
                 list_dataArrayList.add(new ListInfo(R.drawable.ic_launcher_background,list_data.getList_detail().get(0).getNo2Value()));
