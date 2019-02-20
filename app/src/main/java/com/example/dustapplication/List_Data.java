@@ -53,6 +53,9 @@ public class List_Data {
         @SerializedName(value = "pm25Grade1h")
         private String pm25Grade1h;
 
+        @SerializedName(value = "khaiGrade")
+        private String khaiGrade;
+
         public String getSo2Value() {
             return so2Value;
         }
@@ -148,5 +151,14 @@ public class List_Data {
         public void setPm25Grade1h(String pm25Grade1h) {
             this.pm25Grade1h = pm25Grade1h;
         }
+
+        public String getKhaiGrade() {
+            return khaiGrade;
+        }
+
+        public void setKhaiGrade(String khaiGrade) {
+            this.khaiGrade = khaiGrade;
+        }
+
     }
 }
