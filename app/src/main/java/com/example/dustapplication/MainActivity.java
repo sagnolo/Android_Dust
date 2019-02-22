@@ -17,6 +17,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -39,9 +40,12 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class MainActivity extends AppCompatActivity {
     private Retrofit retrofit;
     private TextView textView, gpsData;
+    String localName;
     LocationManager lm;
     RecyclerView mRecyclerView;
     RecyclerView.LayoutManager mLayoutManager;
+    ImageView khaiGrade;
+    int [] imgid;
 
     //int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
     private final int MY_PERMISSIONS_REQUEST_LOCATION = 1001;
@@ -53,6 +57,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         gpsData = (TextView) findViewById(R.id.gpsData);
+        khaiGrade = (ImageView)findViewById(R.id.khaiGrade);
         // LocationManager 객체 얻어오기
         lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
@@ -60,6 +65,11 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView.setHasFixedSize(true);
         mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL,false);
         mRecyclerView.setLayoutManager(mLayoutManager);
+
+        imgid = new int [4];
+        for( int i=0; i<4; i++) {
+            imgid[i] = getResources().getIdentifier("@drawable/state"+ (i+1),"drawable",this.getPackageName());
+        }
 
         if (ContextCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
@@ -145,7 +155,8 @@ public class MainActivity extends AppCompatActivity {
         Geocoder geocoder = new Geocoder(this, Locale.getDefault()); // 위도 및 경도 -> 주소 변환 geocoder 사용
         try {
             List<Address> address = geocoder.getFromLocation(lng, lat, 1); // 주소로 변환
-            gpsData.setText(address.get(0).getSubLocality().toString()); // 구에 대한 정보 가져오기
+            gpsData.setText(address.get(0).getSubLocality().toString() + " " + address.get(0).getThoroughfare()); // 구에 대한 정보 가져오기
+            localName = address.get(0).getSubLocality().toString();
             find_dust();
             Log.d("Data : ", address.get(0).getSubLocality().toString());
         } catch (Exception e) {
@@ -157,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
         GitHub gitHub = retrofit.create(GitHub.class);
         Map<String, String> params = new HashMap<>();
 
-        params.put("stationName", gpsData.getText().toString());
+        params.put("stationName", localName);
         params.put("dataTerm", "DAILY");
         params.put("pageNo", "1");
         params.put("numOfRows", "25");
@@ -169,8 +180,8 @@ public class MainActivity extends AppCompatActivity {
         Call<List_Data> call = gitHub.contributors(params);
 
         call.enqueue(new Callback<List_Data>() {
-            @Override
-            public void onResponse(Call<List_Data> call, Response<List_Data> response) {
+                @Override
+                public void onResponse(Call<List_Data> call, Response<List_Data> response) {
                 List_Data list_data = response.body();
                 String data = "";
 
@@ -180,14 +191,23 @@ public class MainActivity extends AppCompatActivity {
 //                        data += " 미세먼지 농도 : " + list_data.getList_detail().get(i).getPm10Value() + "\n"; // 미세먼지 농도
 //                    }
 //                }
-                data = " 미세먼지 농도 : " + list_data.getList_detail().get(0).getPm10Value() + "\n"; // 미세먼지 농도
-                textView.setText(data);
+                //data = " 미세먼지 농도 : " + list_data.getList_detail().get(0).getPm10Value() + "\n"; // 미세먼지 농도
+                //textView.setText(data);
                 ArrayList<ListInfo> list_dataArrayList = new ArrayList<>();
-                list_dataArrayList.add(new ListInfo(R.drawable.state1,list_data.getList_detail().get(0).getPm10Value()));
-                list_dataArrayList.add(new ListInfo(R.drawable.state1,list_data.getList_detail().get(0).getPm25Value()));
-                list_dataArrayList.add(new ListInfo(R.drawable.state1,list_data.getList_detail().get(0).getCoValue()));
-                list_dataArrayList.add(new ListInfo(R.drawable.state1,list_data.getList_detail().get(0).getNo2Value()));
-                list_dataArrayList.add(new ListInfo(R.drawable.state1,list_data.getList_detail().get(0).getO3Value()));
+                khaiGrade.setImageResource(imgid[Integer.parseInt(list_data.getList_detail().get(0).getKhaiGrade())]);
+                textView.setText("현재 위치");
+                list_dataArrayList.add(new ListInfo(imgid[Integer.parseInt(list_data.getList_detail().get(0).getPm10Grade1h())],
+                        list_data.getList_detail().get(0).getPm10Value() + " ㎍/m³","미세먼지"));
+                list_dataArrayList.add(new ListInfo(imgid[Integer.parseInt(list_data.getList_detail().get(0).getPm25Grade1h())],
+                        list_data.getList_detail().get(0).getPm25Value() + " ㎍/m³" ,"초미세먼지"));
+                list_dataArrayList.add(new ListInfo(imgid[Integer.parseInt(list_data.getList_detail().get(0).getNo2Grade())],
+                        list_data.getList_detail().get(0).getNo2Value() + " ppm","이산화질소"));
+                list_dataArrayList.add(new ListInfo(imgid[Integer.parseInt(list_data.getList_detail().get(0).getO3Grade())],
+                        list_data.getList_detail().get(0).getO3Value() + " ppm","오존"));
+                list_dataArrayList.add(new ListInfo(imgid[Integer.parseInt(list_data.getList_detail().get(0).getCoGrade())],
+                        list_data.getList_detail().get(0).getCoValue() + " ppm","일산화탄소"));
+                list_dataArrayList.add(new ListInfo(imgid[Integer.parseInt(list_data.getList_detail().get(0).getSo2Grade())],
+                        list_data.getList_detail().get(0).getSo2Value() + " ppm","아황산가스"));
 
                 MyAdapter myAdapter = new MyAdapter(list_dataArrayList);
                 mRecyclerView.setAdapter(myAdapter);

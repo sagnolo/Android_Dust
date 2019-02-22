@@ -15,11 +15,13 @@ public class MyAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
     public static class MyViewHolder extends RecyclerView.ViewHolder {
         ImageView state_img;
         TextView dustValue;
+        TextView dustName;
 
         MyViewHolder(View v){
             super(v);
             state_img = v.findViewById(R.id.state_img);
             dustValue = v.findViewById(R.id.dustValue);
+            dustName = v.findViewById(R.id.dustName);
         }
     }
 
@@ -39,7 +41,8 @@ public class MyAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
         MyViewHolder myViewHolder = (MyViewHolder) viewHolder;
 
         myViewHolder.state_img.setImageResource(ListInfoArrayList.get(i).drawableId);
-        myViewHolder.dustValue.setText(ListInfoArrayList.get(i).dust);
+        myViewHolder.dustValue.setText(ListInfoArrayList.get(i).dustValue);
+        myViewHolder.dustName.setText(ListInfoArrayList.get(i).dustName);
     }
 
     @Override
